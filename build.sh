@@ -4,7 +4,7 @@
 MAIN_SCRIPT="scraper-ui.py"
 
 # List additional Python files (if any)
-ADDITIONAL_FILES="scraper_csv.py onvo.py"
+ADDITIONAL_FILES="scraper-ui.py scraper_csv.py basketball_reference_web_scraper/parsers/players_advanced_season_totals.py basketball_reference_web_scraper/parsers/__init__.py basketball_reference_web_scraper/parsers/positions.py basketball_reference_web_scraper/parsers/players_season_totals.py basketball_reference_web_scraper/parsers/box_scores/teams.py basketball_reference_web_scraper/parsers/box_scores/__init__.py basketball_reference_web_scraper/parsers/box_scores/games.py basketball_reference_web_scraper/parsers/box_scores/players.py basketball_reference_web_scraper/parsers/schedule.py basketball_reference_web_scraper/http_client.py basketball_reference_web_scraper/client.py basketball_reference_web_scraper/json_encoders.py basketball_reference_web_scraper/__init__.py basketball_reference_web_scraper/errors.py basketball_reference_web_scraper/utilities.py basketball_reference_web_scraper/data.py basketball_reference_web_scraper/output.py onvo.py integkey.py"
 
 # Define the output directory
 OUTPUT_DIR="dist"
