@@ -17,6 +17,7 @@ beautifulsoup4==4.12.3
 requests==2.31.0
 requests_toolbelt==1.0.0
 ```
+The project also uses resources from [Basketball Reference Web Scraper]([https://github.com/username/repository](https://github.com/jaebradley/basketball_reference_web_scraper))
 
 ## Usage
 Run the application with:
@@ -33,3 +34,4 @@ You can build the executable using pyinstaller but running the build.sh file in 
 
 ## Contributing
 If you want to contribute to this project, feel free to fork the repository and submit a pull request.
+
