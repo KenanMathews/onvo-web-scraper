@@ -12,13 +12,17 @@ pip install -r requirements.txt
 ## Requirements
 The application requires the following dependencies:
 
+```
 beautifulsoup4==4.12.3
 requests==2.31.0
 requests_toolbelt==1.0.0
+```
 
 ## Usage
 Run the application with:
-python3 scraper-ui.py 
+```
+python3 scraper-ui.py
+```
 
 The scraped tables will be saved in a CSV file within the project directory.
 Upload the CSV file to Onvo for data analysis.
