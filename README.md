@@ -17,7 +17,9 @@ beautifulsoup4==4.12.3
 requests==2.31.0
 requests_toolbelt==1.0.0
 ```
-The project also uses resources from [Basketball Reference Web Scraper]([https://github.com/username/repository](https://github.com/jaebradley/basketball_reference_web_scraper))
+The project also uses resources from 
+- [Basketball Reference Web Scraper](https://github.com/jaebradley/basketball_reference_web_scraper) - A library for generating reports from basketball reference website
+
 
 ## Usage
 Run the application with:
