@@ -9,7 +9,7 @@ def create_datasource(api_key, title):
         headers = {"x-api-key": api_key}
         payload = {
             "description": "",
-            "source": "file",
+            "source": "csv",
             "title": title
         }
         response = requests.request("PUT", url, json=payload, headers=headers)
@@ -83,6 +83,8 @@ def load_dashboards(api_key):
         response = requests.request("GET", url, headers=headers)
         if response.status_code == 200:
             return response.json()
+        else: 
+            return None
 def ask_question(api_key,dashboardid,question):
     if len(api_key)>0:
         url = "https://dashboard.onvo.ai/api/questions"
