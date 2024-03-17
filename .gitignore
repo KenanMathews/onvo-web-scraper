@@ -152,3 +152,5 @@ cython_debug/
 #.idea/
 
 basketball_reference_web_scraper/
+.DS_Store
+compose-dev.yaml
