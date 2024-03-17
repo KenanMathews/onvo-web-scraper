@@ -64,6 +64,8 @@ class ScraperUI:
 
         self.check_dashboard_condition()
 
+        self.create_directory_if_not_exists(self.get_export_dir())
+
     def setup_scraper_tab(self):
         # Create frame for selection and labels in the Scraper Tool tab
         self.selection_frame = ttk.Frame(self.scraper_tab)
@@ -182,16 +184,19 @@ class ScraperUI:
             manager = IntegrationKeyManager("integration_key.pkl")
             manager.integration_key = integration_key
             manager._save_integration_key()
+            self.check_dashboard_condition()
+            self.show_dropdown()
 
     def show_dropdown(self):
         # Clear previous options
         self.dashboard_combobox['values'] = ()
         manager = IntegrationKeyManager("integration_key.pkl")
         manager.load_integration_key()
-        self.json_data = onvo.load_dashboards(manager.integration_key)
-        if self.json_data is not None:
-            options = [item["title"] for item in self.json_data]
-            self.dashboard_combobox['values'] = options
+        if manager.integration_key is not None:
+            self.json_data = onvo.load_dashboards(manager.integration_key)
+            if self.json_data is not None:
+                options = [item["title"] for item in self.json_data]
+                self.dashboard_combobox['values'] = options
     def load_option(self):
         # Get selected option from dropdown
         selected_title = self.dashboard_combobox.get()
@@ -230,7 +235,7 @@ class ScraperUI:
         integration_key_manager.load_integration_key()
         integration_key = integration_key_manager.integration_key
         try:
-            if onvo.load_dashboards(integration_key) is not None:
+            if integration_key is not None and onvo.load_dashboards(integration_key) is not None:
                 self.tab_control.add(self.dashboard_tab, text='Dashboard')
             else:
                 self.tab_control.hide(self.dashboard_tab)
@@ -247,12 +252,13 @@ class ScraperUI:
         self.progress_bar.pack(pady=5)
         self.progress_bar.start()
         self.generate_button.config(state="disabled")
+        parent_directory = os.path.dirname(os.getcwd())
         if reportObject == "1":
             # Generate report for players box scores by a date
             inputDate = self.date_entry.get()
             fileName = f"all-player-box-report-{inputDate}.csv"
             dateList = inputDate.split("-")
-            output_file_path = f"exported_files/{fileName}"
+            output_file_path = f"{self.get_export_dir()}/{fileName}"
             file = open(output_file_path, 'w')
             client.player_box_scores(
                 day=dateList[0],
@@ -268,7 +274,7 @@ class ScraperUI:
             # Generate report for players season statistics for a season
             endYear = self.season_end_year_entry.get()
             fileName = f"all-player-season-report-{endYear}.csv"
-            output_file_path = f"exported_files/{fileName}"
+            output_file_path = f"{self.get_export_dir()}/{fileName}"
             file = open(output_file_path, 'w')
             client.players_season_totals(
                 season_end_year=endYear,
@@ -282,7 +288,7 @@ class ScraperUI:
             # Generate report for players advanced season statistics for a season
             endYear = self.season_end_year_entry.get()
             fileName = f"all-player-advanced-season-report-{endYear}.csv"
-            output_file_path = f"exported_files/{fileName}"
+            output_file_path = f"{self.get_export_dir()}/{fileName}"
             file = open(output_file_path, 'w')
             client.players_advanced_season_totals(
                 season_end_year=endYear,
@@ -297,7 +303,7 @@ class ScraperUI:
             inputDate = self.date_entry.get()
             fileName = f"all-team-report-{inputDate}.csv"
             dateList = inputDate.split("-")
-            output_file_path = f"exported_files/{fileName}"
+            output_file_path = f"{self.get_export_dir()}/{fileName}"
             file = open(output_file_path, 'w')
             client.team_box_scores(
                 day=dateList[0],
@@ -313,7 +319,7 @@ class ScraperUI:
             # Generate report for season schedule for a season
             endYear = self.season_end_year_entry.get()
             fileName = f"season-schedule-{endYear}.csv"
-            output_file_path = f"exported_files/{fileName}"
+            output_file_path = f"{self.get_export_dir()}/{fileName}"
             file = open(output_file_path, 'w')
             client.season_schedule(
                 season_end_year=endYear,
@@ -346,7 +352,8 @@ class ScraperUI:
             self.scrape_button.config(state="disabled")
             self.progress_bar.pack(pady=5)
             self.progress_bar.start()
-            threading.Thread(target=self.run_scrape_and_save, args=(url, "exported_files", dashboard_name, api_key)).start()
+            parent_directory = os.path.dirname(os.getcwd())
+            threading.Thread(target=self.run_scrape_and_save, args=(url, f"{self.get_export_dir()}", dashboard_name, api_key)).start()
     def run_scrape_and_save(self, url, file_path, dashboard_name, api_key):
         dashboardid = scraper_csv.scrape_and_save(url, file_path, dashboard_name, api_key)
         
@@ -355,7 +362,7 @@ class ScraperUI:
         self.scrape_button.config(state="normal")
         self.show_completion_popup(self.construct_onvo_url(dashboardid))
     def show_completion_popup(self,url):
-        message = "CSV file has been saved successfully! /n"
+        message = "CSV file has been saved successfully!"
         popup_window = tk.Toplevel(root)
         popup_window.title("Report generation completed")
         # Create a label with the GitHub link
@@ -370,6 +377,12 @@ class ScraperUI:
     def construct_onvo_url(self,dashboardid):
         if dashboardid is not None:
             return f"https://dashboard.onvo.ai/dashboards/{dashboardid}"
+    def create_directory_if_not_exists(self,directory):
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+            print(f"Directory '{directory}' created.")
+    def get_export_dir(self):
+        return f"{os.path.dirname(os.getcwd())}/exported_files"
 if __name__ == "__main__":
     root = tk.Tk()
     app = ScraperUI(root)

@@ -36,4 +36,3 @@ class IntegrationKeyManager:
 if __name__ == "__main__":
     manager = IntegrationKeyManager("integration_key.pkl")
     manager.load_integration_key()
-    print("Integration Key:", manager.integration_key)
