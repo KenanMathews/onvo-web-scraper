@@ -166,9 +166,8 @@ class ScraperUI:
 
     def handle_game_report(self):
         game_ids = self.get_game_ids()
-        print(game_ids)
         dashboardid = nba_api_integ.get_all_game_stats(game_ids,self.get_export_dir(),self.season_select.get(),self.game_action_combobox.get())
-        #self.show_completion_popup(self.construct_onvo_url(dashboardid))
+        self.show_completion_popup(self.construct_onvo_url(dashboardid))
     def get_game_ids(self):
         selected_indices = self.game_list_listbox.curselection()
         selected_ids = [self.game_list[index][1] for index in selected_indices]
