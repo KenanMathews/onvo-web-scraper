@@ -66,7 +66,7 @@ def create_dashboard(api_key,title):
             return None
     return None
 def add_datasouce_to_dashboard(api_key,dashboardid,datasourceid):
-    if len(api_key)>0:
+    if len(api_key)>0 and dashboardid is not None:
         print("Started add_datasouce_to_dashboard")
         url = "https://dashboard.onvo.ai/api/dashboards/"+dashboardid+"/datasources"
         payload = {"datasourceId": datasourceid}

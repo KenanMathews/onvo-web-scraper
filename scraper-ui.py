@@ -1,8 +1,10 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
+from tkcalendar import DateEntry
 from integkey import IntegrationKeyManager
 import onvo 
 import os
+import datetime
 from os.path import abspath
 from basketball_reference_web_scraper import client
 from basketball_reference_web_scraper.data import OutputType
@@ -38,7 +40,7 @@ class ScraperUI:
     def __init__(self, root):
         self.root = root
         self.root.title("Python UI with Tabs")
-        self.root.geometry("800x600")  # Set the size of the main application window
+        self.root.geometry("1280x720")  # Set the size of the main application window
 
         # Create a Tab Control
         self.tab_control = ttk.Notebook(self.root)
@@ -78,52 +80,115 @@ class ScraperUI:
         self.api_frame = ttk.Frame(self.api_tab)
         self.api_frame.pack(pady=10)
 
-        self.season_end_year_label = tk.Label(self.api_frame, text="Player List")
-        self.season_end_year_label.pack(pady=5)
-        
-        self.playerinfo = players.get_players()
+        # Player section
+        player_section = ttk.Frame(self.api_frame)
+        player_section.pack(side=tk.LEFT, padx=10)
 
+        self.season_end_year_label = tk.Label(player_section, text="Player List")
+        self.season_end_year_label.pack(pady=5)
+
+        self.playerinfo = players.get_players()
         options = nba_api_integ.player_api_actions
 
-        # Create the select box
-        self.player_action_select_box = ttk.Combobox(self.api_frame, values=options)
+        self.player_action_select_box = ttk.Combobox(player_section, values=options)
         self.player_action_select_box.pack(pady=10)
-         
+
         search_var_1 = tk.StringVar()
-        self.search_entry = ttk.Entry(self.api_frame, textvariable=search_var_1)
+        self.search_entry = ttk.Entry(player_section, textvariable=search_var_1)
         self.search_entry.pack()
         self.search_entry.bind('<KeyRelease>', lambda event: self.on_search(self.player_select_box,search_var_1.get().lower(),self.playerinfo,'full_name'))
 
-        self.player_select_box = tk.Listbox(self.api_frame, height=5, selectmode=tk.MULTIPLE)
+        self.player_select_box = tk.Listbox(player_section, height=5, selectmode=tk.MULTIPLE)
         self.player_select_box.pack()
         self.load_search_options(self.player_select_box,self.playerinfo,'full_name')
-         
-        self.generate_player_api_report = ttk.Button(self.api_frame, text="Generate Report", command=self.handle_player_report)
+
+        self.generate_player_api_report = ttk.Button(player_section, text="Generate Report", command=self.handle_player_report)
         self.generate_player_api_report.pack(pady=10)
 
-        self.teaminfo = teams.get_teams()
-         
-         
-        self.season_end_year_label = tk.Label(self.api_frame, text="Team List")
+        # Team section
+        team_section = ttk.Frame(self.api_frame)
+        team_section.pack(side=tk.LEFT, padx=10)
+
+        self.season_end_year_label = tk.Label(team_section, text="Team List")
         self.season_end_year_label.pack(pady=5)
 
+        self.teaminfo = teams.get_teams()
         options = nba_api_integ.team_api_actions
-         # Create the select box
-        self.team_action_select_box = ttk.Combobox(self.api_frame, values=options)
+
+        self.team_action_select_box = ttk.Combobox(team_section, values=options)
         self.team_action_select_box.pack(pady=10)
 
         search_var_2 = tk.StringVar()
-        self.search_entry = ttk.Entry(self.api_frame, textvariable=search_var_2)
+        self.search_entry = ttk.Entry(team_section, textvariable=search_var_2)
         self.search_entry.pack()
         self.search_entry.bind('<KeyRelease>', lambda event: self.on_search(self.team_select_box,search_var_2.get().lower(),self.teaminfo,'full_name'))
 
-        self.team_select_box = tk.Listbox(self.api_frame, height=5)
+        self.team_select_box = tk.Listbox(team_section, height=5, selectmode=tk.MULTIPLE)
         self.team_select_box.pack()
         self.load_search_options(self.team_select_box,self.teaminfo,'full_name')
 
-        self.generate_team_api_report = ttk.Button(self.api_frame, text="Generate Report", command=self.handle_team_report)
+        self.generate_team_api_report = ttk.Button(team_section, text="Generate Report", command=self.handle_team_report)
         self.generate_team_api_report.pack(pady=10)
-    
+
+        # General section
+        general_section = ttk.Frame(self.api_frame)
+        general_section.pack(side=tk.LEFT, padx=10)
+
+        options = nba_api_integ.general_api_actions
+
+        self.general_action_select_box = ttk.Combobox(general_section, values=options)
+        self.general_action_select_box.pack(pady=10)
+
+        self.generate_general_api_report = ttk.Button(general_section, text="Generate Report", command=self.handle_general_report)
+        self.generate_general_api_report.pack(pady=10)
+
+        game_section = ttk.Frame(self.api_frame)
+        game_section.pack(side=tk.LEFT, padx=10)
+
+        self.season_game_section_label = tk.Label(game_section, text="Select Season")
+        self.season_game_section_label.pack(pady=5)
+        self.season_select = ttk.Combobox(game_section, values=self.generate_years())
+        self.season_select.pack(side=tk.TOP, padx=5, pady=5)
+        
+        self.season_game_section_label = tk.Label(game_section, text="Select Report Type")
+        self.season_game_section_label.pack(pady=5)
+        self.game_action_combobox = ttk.Combobox(game_section, values=nba_api_integ.game_api_actions)
+        self.game_action_combobox.pack(side=tk.TOP, padx=5, pady=5)
+
+        self.season_select_submit_button = ttk.Button(game_section, text="Load Games", command=self.get_games)
+        self.season_select_submit_button.pack(side=tk.TOP, padx=5, pady=5)
+        
+        self.game_list_listbox = tk.Listbox(game_section, height=5, selectmode=tk.MULTIPLE)
+        self.game_list_listbox.pack()
+        
+        self.season_select_submit_button = ttk.Button(game_section, text="Generate Report", command=self.handle_game_report)
+        self.season_select_submit_button.pack(side=tk.TOP, padx=5, pady=5)
+
+    def handle_game_report(self):
+        game_ids = self.get_game_ids()
+        print(game_ids)
+        dashboardid = nba_api_integ.get_all_game_stats(game_ids,self.get_export_dir(),self.season_select.get(),self.game_action_combobox.get())
+        #self.show_completion_popup(self.construct_onvo_url(dashboardid))
+    def get_game_ids(self):
+        selected_indices = self.game_list_listbox.curselection()
+        selected_ids = [self.game_list[index][1] for index in selected_indices]
+        #selected_items = [self.game_list_listbox.get(index) for index in selected_indices]
+        return selected_ids
+    def get_games(self):
+        obj = nba_api_integ.get_all_games(self.season_select.get())
+        self.game_list = [(option["MATCHUP"], option["GAME_ID"]) for option in obj]
+        options = [display for display, _ in self.game_list]
+        self.game_list_listbox.delete(0, tk.END)
+        for option in options:
+            self.game_list_listbox.insert(tk.END, option)
+    def generate_years(self,start_year=1946):
+        current_year = datetime.datetime.now().year
+        years = []
+        for year in range(start_year, current_year + 1):
+            formatted_year = f"{year}-{str(year + 1)[-2:]}"  # Format as 'YYYY-YY'
+            years.append(formatted_year)
+        return years
+
     def handle_player_report(self):
         player_ids = self.get_player_from_select_box()
         dashboardid = nba_api_integ.get_all_player_stats(player_ids,self.get_export_dir(),self.player_action_select_box.get())
@@ -133,6 +198,11 @@ class ScraperUI:
         team_ids = self.get_teams_from_select_box()
         dashboardid = nba_api_integ.get_all_team_stats(team_ids,self.get_export_dir(),self.team_action_select_box.get())
         self.show_completion_popup(self.construct_onvo_url(dashboardid))
+
+    def handle_general_report(self):
+        dashboardid = nba_api_integ.get_all_general_stats(self.get_export_dir(),self.general_action_select_box.get())
+        self.show_completion_popup(self.construct_onvo_url(dashboardid))
+        
     def load_search_options(self,box,items, key):
         for item in items:
             box.insert(tk.END, item[key])
