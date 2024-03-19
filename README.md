@@ -13,9 +13,14 @@ pip install -r requirements.txt
 The application requires the following dependencies:
 
 ```
-beautifulsoup4==4.12.3
+beautifulsoup4==4.12.2
+lxml==5.1.0
+nba_api==1.4.1
+pandas==2.1.4
+pytz==2023.3.post1
 requests==2.31.0
-requests_toolbelt==1.0.0
+requests-toolbelt==1.0.0
+tkcalendar==1.6.1
 ```
 The project also uses resources from 
 - [Basketball Reference Web Scraper](https://github.com/jaebradley/basketball_reference_web_scraper) - A library for generating reports from basketball reference website
