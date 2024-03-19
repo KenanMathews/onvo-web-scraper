@@ -9,6 +9,9 @@ from basketball_reference_web_scraper.data import OutputType
 import scraper_csv
 import threading
 import webbrowser
+from nba_api.stats.static import players
+from nba_api.stats.static import teams
+import nba_api_integ
 
 
 class LinkLabel(ttk.Label):
@@ -16,8 +19,8 @@ class LinkLabel(ttk.Label):
         super().__init__(master, text=text, cursor="hand2", *args, **kwargs)
         self.url = url
         self.bind("<Button-1>", self.open_link)
-
-    def open_link(self,event):
+        
+    def open_link(self, event):
         webbrowser.open(self.url)
 
 class LoaderDialog(tk.Toplevel):
@@ -41,14 +44,19 @@ class ScraperUI:
         self.tab_control = ttk.Notebook(self.root)
 
         # Create tabs
+        self.api_tab = ttk.Frame(self.tab_control)
         self.scraper_tab = ttk.Frame(self.tab_control)
         self.settings_tab = ttk.Frame(self.tab_control)
         self.dashboard_tab = ttk.Frame(self.tab_control)
 
         # Add tabs to the Tab Control
+        self.tab_control.add(self.api_tab, text='NBA API Tool')
         self.tab_control.add(self.scraper_tab, text='Scraper Tool')
         self.tab_control.add(self.settings_tab, text='Settings')
         self.tab_control.add(self.dashboard_tab, text='Dashboard')
+
+        # Set up the layout for the Scraper Tool tab
+        self.setup_api_tab()
 
         # Set up the layout for the Scraper Tool tab
         self.setup_scraper_tab()
@@ -66,6 +74,115 @@ class ScraperUI:
 
         self.create_directory_if_not_exists(self.get_export_dir())
 
+    def setup_api_tab(self):
+        self.api_frame = ttk.Frame(self.api_tab)
+        self.api_frame.pack(pady=10)
+
+        self.season_end_year_label = tk.Label(self.api_frame, text="Player List")
+        self.season_end_year_label.pack(pady=5)
+        
+        self.playerinfo = players.get_players()
+
+        options = nba_api_integ.player_api_actions
+
+        # Create the select box
+        self.player_action_select_box = ttk.Combobox(self.api_frame, values=options)
+        self.player_action_select_box.pack(pady=10)
+         
+        search_var_1 = tk.StringVar()
+        self.search_entry = ttk.Entry(self.api_frame, textvariable=search_var_1)
+        self.search_entry.pack()
+        self.search_entry.bind('<KeyRelease>', lambda event: self.on_search(self.player_select_box,search_var_1.get().lower(),self.playerinfo,'full_name'))
+
+        self.player_select_box = tk.Listbox(self.api_frame, height=5, selectmode=tk.MULTIPLE)
+        self.player_select_box.pack()
+        self.load_search_options(self.player_select_box,self.playerinfo,'full_name')
+         
+        self.generate_player_api_report = ttk.Button(self.api_frame, text="Generate Report", command=self.handle_player_report)
+        self.generate_player_api_report.pack(pady=10)
+
+        self.teaminfo = teams.get_teams()
+         
+         
+        self.season_end_year_label = tk.Label(self.api_frame, text="Team List")
+        self.season_end_year_label.pack(pady=5)
+
+        options = nba_api_integ.team_api_actions
+         # Create the select box
+        self.team_action_select_box = ttk.Combobox(self.api_frame, values=options)
+        self.team_action_select_box.pack(pady=10)
+
+        search_var_2 = tk.StringVar()
+        self.search_entry = ttk.Entry(self.api_frame, textvariable=search_var_2)
+        self.search_entry.pack()
+        self.search_entry.bind('<KeyRelease>', lambda event: self.on_search(self.team_select_box,search_var_2.get().lower(),self.teaminfo,'full_name'))
+
+        self.team_select_box = tk.Listbox(self.api_frame, height=5)
+        self.team_select_box.pack()
+        self.load_search_options(self.team_select_box,self.teaminfo,'full_name')
+
+        self.generate_team_api_report = ttk.Button(self.api_frame, text="Generate Report", command=self.handle_team_report)
+        self.generate_team_api_report.pack(pady=10)
+    
+    def handle_player_report(self):
+        player_ids = self.get_player_from_select_box()
+        dashboardid = nba_api_integ.get_all_player_stats(player_ids,self.get_export_dir(),self.player_action_select_box.get())
+        self.show_completion_popup(self.construct_onvo_url(dashboardid))
+    
+    def handle_team_report(self):
+        team_ids = self.get_teams_from_select_box()
+        dashboardid = nba_api_integ.get_all_team_stats(team_ids,self.get_export_dir(),self.team_action_select_box.get())
+        self.show_completion_popup(self.construct_onvo_url(dashboardid))
+    def load_search_options(self,box,items, key):
+        for item in items:
+            box.insert(tk.END, item[key])
+
+    def on_search(self,box,search_query,items,key):
+        box.delete(0, tk.END)  # Clear previous items
+
+    # Filter items based on search query
+        filtered_items = [item for item in items if any(search_query in str(val).lower() for val in item.values())]
+        for item in filtered_items:
+            box.insert(tk.END, item[key])
+
+    def get_player_career_stats(self):
+        player = self.get_player_from_select_box()
+        if player is not None:
+            nba_api_integ.get_player_career_stats(player['id'],self.get_export_dir())
+    def get_player_fantasy_profile(self):
+        player = self.get_player_from_select_box()
+        if player is not None:
+            nba_api_integ.get_player_fantasy_profile(player['id'],self.get_export_dir())
+    def get_player_dashboard(self):
+        player = self.get_player_from_select_box()
+        if player is not None:
+            nba_api_integ.get_player_dashboard(player['id'],self.get_export_dir())
+    def get_player_from_select_box(self):
+        player_ids = []
+        selected_items = self.player_select_box.curselection()
+        for idx in selected_items:
+            player_name = self.player_select_box.get(idx)
+            player_obj = self.get_player_obj_by_full_name(player_name)
+            player_ids.append(player_obj['id'])
+        return player_ids
+    def get_player_obj_by_full_name(self,value):
+        try:
+            return players.find_players_by_full_name(value)[0]
+        except:
+            return None
+    def get_teams_from_select_box(self):
+        team_ids = []
+        selected_items = self.team_select_box.curselection()
+        for idx in selected_items:
+            team_name = self.team_select_box.get(idx)
+            team_obj = self.get_team_obj_by_full_name(team_name)
+            team_ids.append(team_obj['id'])
+        return team_ids
+    def get_team_obj_by_full_name(self,value):
+        try:
+            return teams.find_teams_by_full_name(value)[0]
+        except:
+            return None
     def setup_scraper_tab(self):
         # Create frame for selection and labels in the Scraper Tool tab
         self.selection_frame = ttk.Frame(self.scraper_tab)
@@ -133,6 +250,12 @@ class ScraperUI:
         self.save_integration_key_button = ttk.Button(self.settings_frame, text="Save Integration Key", command=self.save_integration_key)
         self.save_integration_key_button.pack(pady=5)
 
+        self.integration_key_info = ttk.Label(self.settings_frame, text="Sign into onvo and use the below url to get key")
+        self.integration_key_info.pack(pady=10)
+
+        self.link_label = LinkLabel(self.settings_frame, text="Onvo", url="https://dashboard.onvo.ai/api-keys")
+        self.link_label.pack(padx=10, pady=10)
+
     def setup_dashboard_tab(self):
         # Create frame for dashboard in the Dashboard tab
         self.dashboard_frame = ttk.Frame(self.dashboard_tab)
@@ -186,6 +309,8 @@ class ScraperUI:
             manager._save_integration_key()
             self.check_dashboard_condition()
             self.show_dropdown()
+        else:
+            messagebox.showinfo("Invalid key", "The key you have entered might be incorrect. Check and try again.")
 
     def show_dropdown(self):
         # Clear previous options
@@ -352,7 +477,6 @@ class ScraperUI:
             self.scrape_button.config(state="disabled")
             self.progress_bar.pack(pady=5)
             self.progress_bar.start()
-            parent_directory = os.path.dirname(os.getcwd())
             threading.Thread(target=self.run_scrape_and_save, args=(url, f"{self.get_export_dir()}", dashboard_name, api_key)).start()
     def run_scrape_and_save(self, url, file_path, dashboard_name, api_key):
         dashboardid = scraper_csv.scrape_and_save(url, file_path, dashboard_name, api_key)
